@@ -1,0 +1,77 @@
+{
+  "routines": [
+    {
+      "name": "상체 집중 (가슴/등/어깨)",
+      "exercises": [
+        {
+          "name": "푸시업",
+          "sets": 4,
+          "reps": "15회",
+          "rest": 60
+        },
+        {
+          "name": "덤벨 로우 / 풀업",
+          "sets": 4,
+          "reps": "12회",
+          "rest": 60
+        },
+        {
+          "name": "숄더프레스",
+          "sets": 3,
+          "reps": "12회",
+          "rest": 60
+        }
+      ]
+    },
+    {
+      "name": "하체 & 코어 집중",
+      "exercises": [
+        {
+          "name": "스쿼트",
+          "sets": 4,
+          "reps": "15회",
+          "rest": 60
+        },
+        {
+          "name": "런지",
+          "sets": 3,
+          "reps": "12회",
+          "rest": 60
+        },
+        {
+          "name": "플랭크",
+          "sets": 3,
+          "reps": "45초",
+          "rest": 45
+        }
+      ]
+    },
+    {
+      "name": "전신 유산소 & 버닝",
+      "exercises": [
+        {
+          "name": "버피 테스트",
+          "sets": 3,
+          "reps": "15회",
+          "rest": 45
+        },
+        {
+          "name": "마운틴 클라이머",
+          "sets": 3,
+          "reps": "20회",
+          "rest": 45
+        },
+        {
+          "name": "점핑잭",
+          "sets": 3,
+          "reps": "30회",
+          "rest": 30
+        }
+      ]
+    }
+  ],
+  "active_routine_idx": 0,
+  "history": [],
+  "reminder_time": "20:00",
+  "reminder_interval": 1
+}
