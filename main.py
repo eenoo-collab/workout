@@ -1,4 +1,10 @@
 import sys, tkinter as tk
+
+import urllib.error
+import urllib.parse
+import urllib.request
+
+from dotenv import load_dotenv
 from tkinter import ttk, messagebox, simpledialog
 import data_manager, workout_session
 
@@ -15,6 +21,19 @@ def apply_theme(root):
     s.configure("Main.TButton", background="#38BDF8", foreground="#FFFFFF", font=("Malgun Gothic", 10, "bold"))
     s.map("Main.TButton", background=[("active", ACC)])
     s.configure("Treeview.Heading", background="#BAE6FD", foreground=TXT, font=("Malgun Gothic", 9, "bold"))
+
+def format_exercise_info(results):
+    lines = []
+    for r in results:
+        lines.append(f"■ {r.get('name', '')}")
+        lines.append(f"대상 근육: {r.get('muscle', '-')} | 종류: {r.get('type', '-')} | 난이도: {r.get('difficulty', '-')}")
+        eq = r.get("equipments") or r.get("equipment") or "-"
+        if isinstance(eq, list): eq = ", ".join(eq) or "-"
+        lines.append(f"장비: {eq}")
+        lines.append(f"방법: {r.get('instructions', '-')}")
+        if r.get("safety_info"): lines.append(f"주의: {r['safety_info']}")
+        lines.append("")
+    return "\n".join(lines)
 
 class RoutineEditorDialog:
     def __init__(self, parent, data, on_save):
@@ -34,6 +53,7 @@ class RoutineEditorDialog:
         bf = ttk.Frame(self.win, padding=5); bf.pack(fill=tk.X)
         ttk.Button(bf, text="운동 추가", style="Sky.TButton", command=self._add_ex).pack(side=tk.LEFT, padx=3)
         ttk.Button(bf, text="선택 삭제", style="Sky.TButton", command=self._del_ex).pack(side=tk.LEFT, padx=3)
+        ttk.Button(bf, text="운동 정보", style="Sky.TButton", command=self._show_info).pack(side=tk.LEFT, padx=3)
         ttk.Button(bf, text="저장 및 닫기", style="Main.TButton", command=self._save_and_close).pack(side=tk.RIGHT, padx=3)
         self._refresh()
 
@@ -72,6 +92,23 @@ class RoutineEditorDialog:
         sel = self.lb.curselection()
         if sel: del self._cur_r()["exercises"][sel[0]]; self._refresh()
 
+    def _show_info(self):
+        sel = self.lb.curselection()
+        if not sel:
+            return messagebox.showinfo("안내", "정보를 볼 운동을 목록에서 선택하세요.", parent=self.win)
+        name = self._cur_r()["exercises"][sel[0]]["name"]
+        self.win.config(cursor="watch"); self.win.update_idletasks()
+        results, err = data_manager.fetch_exercise_info(name)
+        self.win.config(cursor="")
+        if err:
+            return messagebox.showwarning("운동 정보", err, parent=self.win)
+        pop = tk.Toplevel(self.win); pop.title(f"운동 정보 - {name}"); pop.geometry("480x420")
+        pop.configure(bg=BG); pop.transient(self.win)
+        sb = ttk.Scrollbar(pop); sb.pack(side=tk.RIGHT, fill=tk.Y)
+        self.info_text = tk.Text(pop, wrap=tk.WORD, font=("Malgun Gothic", 10), bg=CARD, fg=TXT, yscrollcommand=sb.set)
+        self.info_text.pack(fill=tk.BOTH, expand=True, padx=8, pady=8); sb.config(command=self.info_text.yview)
+        self.info_text.insert(tk.END, format_exercise_info(results)); self.info_text.config(state=tk.DISABLED)
+        pop.grab_set(); self.win.wait_window(pop); self.win.grab_set()
     def _save_and_close(self):
         self.data["active_routine_idx"] = max(0, self.r_combo.current())
         data_manager.save_data(self.data); self.on_save(); self.win.destroy()

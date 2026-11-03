@@ -4,6 +4,12 @@ import os
 import random
 import subprocess
 import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 DATA_FILE = "workout_data.json"
 TASK_NAME = "DailyWorkoutReminder"
@@ -141,3 +147,40 @@ def is_task_scheduled():
         return res.returncode == 0
     except Exception:
         return False
+
+# ---- 운동 정보 API (API Ninjas Exercises) ----
+API_URL = "https://api.api-ninjas.com/v1/exercises"
+
+# 한국어 운동 이름(공백 제거) -> 영어 검색어. API가 영어만 지원하기 때문에 필요하다.
+EXERCISE_EN = {
+    "푸시업": "push", "팔굽혀펴기": "push", "스쿼트": "squat", "런지": "lunge",
+    "플랭크": "plank", "숄더프레스": "shoulder press", "덤벨로우": "row",
+    "풀업": "pull", "버피테스트": "burpee", "마운틴클라이머": "mountain climber",
+    "점핑잭": "jumping jack", "벤치프레스": "bench press", "데드리프트": "deadlift",
+}
+
+def get_search_term(name):
+    first = name.split("/")[0].strip()
+    return EXERCISE_EN.get(first.replace(" ", ""), first)
+
+def fetch_exercise_info(name):
+    """(결과 리스트, 오류 메시지)를 돌려준다. 성공하면 오류 메시지는 None."""
+    key = os.getenv("API_NINJAS_KEY", "").strip()
+    if not key:
+        return None, "API 키가 없습니다. .env 파일에 API_NINJAS_KEY를 넣어 주세요."
+    url = API_URL + "?" + urllib.parse.urlencode({"name": get_search_term(name)})
+    req = urllib.request.Request(url, headers={"X-Api-Key": key})
+    try:
+        with urllib.request.urlopen(req, timeout=5) as res:
+            result = json.loads(res.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        if e.code in (400, 401, 403):
+            return None, "API 키가 올바르지 않습니다."
+        if e.code == 429:
+            return None, "API 사용 한도를 넘었습니다."
+        return None, f"API 오류 ({e.code})"
+    except Exception:
+        return None, "정보를 불러올 수 없습니다. 인터넷 연결을 확인해 주세요."
+    if not result:
+        return None, "정보를 찾지 못했습니다."
+    return result, None

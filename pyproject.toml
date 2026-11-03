@@ -6,5 +6,7 @@ authors = [
     { name = "eenoo-collab", email = "eenoe@g.skku.edu" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "python-dotenv>=1.2.4",
+]
 
